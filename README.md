@@ -1,26 +1,76 @@
-# PLC_Project
+# PLC Automation Project – Conveyor & Ejection System
 
-# Descrizione
-Mini linea automatizzata sviluppata in TwinCAT 3 per simulare un sistema industriale.
+## Descrizione
+Progetto PLC sviluppato in TwinCAT 3 (Structured Text) che simula una mini linea automatizzata composta da un nastro trasportatore e una stazione di espulsione.
+
+L’obiettivo è riprodurre logiche tipiche industriali: gestione attuatori, coordinamento macchina, fault handling e simulazione segnali.
+
+---
 
 ## Architettura
 
-Il progetto è strutturato secondo un'architettura modulare:
+Il progetto è strutturato secondo un’architettura modulare:
 
-- MAIN: coordinamento della logica macchina
-- FB: gestione attuatori (motore, valvola)
-- TYPES: definizione enum e stati
-- GVL: segnali globali (I/O simulati)
+- **MAIN**
+  - Coordinamento della logica macchina tramite state machine
+  - Gestione sequenze operative ed eventi
+
+- **FB_Motor**
+  - Controllo motore con stati: IDLE, STARTING, RUNNING, STOPPING, FAULT
+  - Gestione timeout di avviamento e perdita feedback
+  - Contatore avviamenti e gestione warning
+
+- **FB_Valve**
+  - Controllo valvola con stati: IDLE, OPENING, OPENED, CLOSING, CLOSED, FAULT
+  - Gestione timeout apertura/chiusura
+  - Controllo coerenza feedback (diagnostica errore)
+
+- **TYPES**
+  - Definizione ENUM per stati e codici errore
+
+- **GVL**
+  - Gestione segnali globali (I/O simulati)
+
+---
 
 ## Logica di funzionamento
 
-- Il sensore rileva un pezzo sul nastro
-- Dopo un ritardo viene attivata la valvola
-- La valvola esegue apertura/chiusura tramite state machine
-- Il motore gestisce avviamento, running e fault
+1. Il sistema entra in stato RUN tramite comando Start
+2. Il motore avvia il nastro trasportatore
+3. Un sensore rileva il pezzo in arrivo
+4. Dopo un ritardo temporizzato, viene attivata la valvola
+5. La valvola esegue una sequenza di apertura e chiusura per espulsione
+6. Il sistema monitora eventuali fault e passa in stato di errore se necessario
 
-## Caratteristiche
-- Structured Text (TwinCAT 3)
-- State machine per attuatori
-- Gestione fault (timeout, interlock)
-- Simulazione segnali
+---
+
+## Caratteristiche tecniche
+
+- Linguaggio: Structured Text (IEC 61131-3)
+- Architettura modulare basata su Function Block
+- Implementazione di state machine per attuatori e macchina
+- Gestione eventi tramite edge detection (`R_TRIG`)
+- Utilizzo di timer IEC (`TON`) per sequenze temporizzate
+- Gestione fault:
+  - Timeout attuatori
+  - Interlock
+  - E-Stop
+  - Incoerenza feedback
+- Simulazione dei segnali per test senza hardware
+
+---
+
+## Obiettivo del progetto
+
+Sviluppare competenze pratiche in ambito automazione industriale:
+
+- Progettazione software PLC strutturato
+- Separazione tra logica, dispositivi e I/O
+- Gestione robusta degli stati e degli errori
+- Approccio modulare e scalabile
+
+---
+
+## Note
+
+Il progetto è stato sviluppato a scopo formativo per simulare un contesto industriale reale.
