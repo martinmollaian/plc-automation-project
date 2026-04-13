@@ -3,13 +3,21 @@
 # Descrizione
 Mini linea automatizzata sviluppata in TwinCAT 3 per simulare un sistema industriale.
 
-# Architettura
-- MAIN: logica di coordinamento
-- FB_Motor: gestione motore con state machine
-- FB_Valve: gestione valvola con apertura/chiusura
+## Architettura
 
-## Funzionamento
-Un sensore rileva un pezzo sul nastro. Dopo un ritardo, viene attivata una valvola per espulsione.
+Il progetto è strutturato secondo un'architettura modulare:
+
+- MAIN: coordinamento della logica macchina
+- FB: gestione attuatori (motore, valvola)
+- TYPES: definizione enum e stati
+- GVL: segnali globali (I/O simulati)
+
+## Logica di funzionamento
+
+- Il sensore rileva un pezzo sul nastro
+- Dopo un ritardo viene attivata la valvola
+- La valvola esegue apertura/chiusura tramite state machine
+- Il motore gestisce avviamento, running e fault
 
 ## Caratteristiche
 - Structured Text (TwinCAT 3)
