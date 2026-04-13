@@ -1,0 +1,89 @@
+PROGRAM MAIN
+VAR
+	fbMotor : FB_Motor;
+    fbValve : FB_Valve;
+
+    rtPiece : R_TRIG;
+    tDelay  : TON;
+    tBlow   : TON;
+
+    MachineState : State_Machine := ST_IDLE;
+END_VAR
+
+rtPiece(CLK := PieceSensor);
+
+fbMotor.Start := FALSE;
+fbMotor.Stop := FALSE;
+fbValve.OpenCmd := FALSE;
+fbValve.CloseCmd := FALSE;
+
+CASE MachineState OF
+
+ST_IDLE:
+    fbMotor.Start := FALSE;
+
+    IF Start THEN
+        MachineState := ST_RUN;
+    END_IF
+
+
+ST_RUN:
+
+    fbMotor.Start := TRUE;
+    fbMotor.Stop := FALSE;
+
+    IF rtPiece.Q THEN
+        tDelay(IN := TRUE, PT := T#500ms);
+    ELSE
+        tDelay(IN := FALSE);
+    END_IF
+
+    IF tDelay.Q THEN
+        tBlow(IN := TRUE, PT := T#300ms);
+    ELSE
+        tBlow(IN := FALSE);
+    END_IF
+
+    fbValve.OpenCmd := tBlow.IN;
+    fbValve.CloseCmd := tBlow.Q;
+
+    // ERRORI
+    IF fbMotor.Fault OR fbValve.Fault THEN
+        MachineState := ST_ERROR;
+    END_IF
+
+    IF Stop THEN
+        MachineState := ST_IDLE;
+    END_IF
+
+
+ST_ERROR:
+
+    fbMotor.Start := FALSE;
+    fbValve.OpenCmd := FALSE;
+    fbValve.CloseCmd := FALSE;
+
+    IF Reset THEN
+        MachineState := ST_IDLE;
+    END_IF
+
+END_CASE
+
+fbMotor(
+    MotorFeedback := SimMotorFB,
+    EStop := EStop,
+    InterlockOK := InterlockOK,
+    Reset := Reset
+);
+
+fbValve(
+    OpenFeedback := SimOpenFB,
+    CloseFeedback := SimCloseFB,
+    E_Stop := EStop,
+    InterlockOK := InterlockOK,
+    Reset := Reset
+);
+
+MotorOut     := fbMotor.MotorCmd;
+ValveOpenOut := fbValve.OpenOut;
+ValveCloseOut := fbValve.CloseOut;
