@@ -1,1 +1,121 @@
+FUNCTION_BLOCK FB_Valve
+VAR_INPUT
+	OpenCmd : BOOL;
+	CloseCmd : BOOL;
+	OpenFeedback : BOOL;
+	CloseFeedback : BOOL;
+	E_Stop : BOOL;
+	InterLockOK : BOOL;
+	Reset : BOOL;
+END_VAR
+VAR_OUTPUT
+	OpenOut : BOOL;
+	CloseOut : BOOL;
+	IsOpen : BOOL;
+	IsClose : BOOL;
+	Fault: BOOL;
+	Error : Valve_Error;
+END_VAR
+VAR
+	State : Valve_State := STV_IDLE;
+	
+	rtOpen : R_TRIG;
+	rtClose : R_TRIG;
+	rtReset : R_TRIG;
+	
+	tMove : TON;
+	
+	TimeOut : TIME := T#5S;
+END_VAR
 
+rtOpen(CLK:= OpenCmd);
+rtClose(CLK :=CloseCmd);
+rtReset(CLK := Reset);
+tMove(IN := FALSE);
+
+IF E_Stop THEN
+	OpenOut := FALSE;
+	CloseOut := FALSE;
+	Fault := TRUE;
+	State := STV_FAULT;
+	Error := E_STOP_ACTIVE;
+	RETURN;
+END_IF
+IF NOT InterlockOK THEN
+	OpenOut := FALSE;
+	CloseOut := FALSE;
+	FAULT := TRUE;
+	State := STV_FAULT;
+	Error := INTERLOCKV_OPEN;
+    RETURN;
+END_IF
+
+IF OpenFeedback AND CloseFeedback THEN 
+OpenOut := FALSE;
+CloseOut := FALSE; 
+Fault := TRUE; 
+State := STV_FAULT; 
+Error := INVALID_FEEDBACK; 
+RETURN; 
+END_IF
+
+IsOpen := FALSE;
+IsClose := FALSE;
+Fault := FALSE;
+
+CASE State OF
+	STV_IDLE :
+	   OpenOut := FALSE;
+       CloseOut :=FALSE;
+       IF rtOpen.Q THEN
+		   State := STV_OPENING;
+	   ELSIF rtClose.Q THEN
+		   State := STV_CLOSING;
+	   END_IF
+	STV_OPENING :
+	   OpenOut := TRUE;
+	   CloseOut := FALSE;
+	   tMove(IN := TRUE, PT := TimeOut);
+	   IF OpenFeedback THEN
+		   State := STV_OPENED;
+	   ELSIF tMove.Q THEN
+		   State := STV_FAULT;
+           Error := TIME_OUT_OPEN;
+	   END_IF
+	 STV_OPENED :
+	    OpenOut := TRUE;
+		CloseOut := FALSE;
+		IsOpen := TRUE;
+		IF rtClose.Q THEN
+			State := STV_CLOSING;
+		END_IF
+	STV_CLOSING :
+	    OpenOut := FALSE;
+		CloseOut := TRUE;
+		tMove(IN := TRUE, PT := TimeOut);
+		IF CloseFeedback THEN
+			State := STV_CLOSED;
+		ELSIF tMove.Q THEN
+			State := STV_FAULT;
+			Error := TIME_OUT_CLOSE;
+		END_IF
+	STV_CLOSED :
+	    OpenOut := FALSE;
+		CloseOut := TRUE;
+		IsClose := TRUE;
+		IF rtOpen.Q THEN
+			State := STV_OPENING;
+		END_IF
+		
+	STV_FAULT :
+	    Fault := TRUE;
+	    OpenOut :=FALSE;
+		CloseOut := FALSE;
+		IsClose := FALSE;
+		IsOpen := FALSE;
+		IF rtReset.Q THEN
+			Fault:= FALSE;
+			Error := NONE;
+			State := STV_IDLE;
+		END_IF    
+END_CASE
