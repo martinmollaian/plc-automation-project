@@ -1,0 +1,114 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+  <POU Name="MAIN" Id="{d862376b-c84c-4576-a80c-631cfd95d38c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM MAIN
+VAR
+	fbMotor : FB_Motor;
+    fbValve : FB_Valve;
+
+    rtPiece : R_TRIG;
+    tDelay  : TON;
+    tBlow   : TON;
+
+    MachineState : State_Machine := ST_IDLE;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[rtPiece(CLK := PieceSensor);
+
+fbMotor.Start := FALSE;
+fbMotor.Stop := FALSE;
+fbValve.OpenCmd := FALSE;
+fbValve.CloseCmd := FALSE;
+
+CASE MachineState OF
+
+ST_IDLE:
+    fbMotor.Start := FALSE;
+
+    IF Start THEN
+        MachineState := ST_RUN;
+    END_IF
+
+
+ST_RUN:
+
+    fbMotor.Start := TRUE;
+    fbMotor.Stop := FALSE;
+
+    IF rtPiece.Q THEN
+        tDelay(IN := TRUE, PT := T#500ms);
+    ELSE
+        tDelay(IN := FALSE);
+    END_IF
+
+    IF tDelay.Q THEN
+        tBlow(IN := TRUE, PT := T#300ms);
+    ELSE
+        tBlow(IN := FALSE);
+    END_IF
+
+    fbValve.OpenCmd := tBlow.IN;
+    fbValve.CloseCmd := tBlow.Q;
+
+    // ERRORI
+    IF fbMotor.Fault OR fbValve.Fault THEN
+        MachineState := ST_ERROR;
+    END_IF
+
+    IF Stop THEN
+        MachineState := ST_IDLE;
+    END_IF
+
+
+ST_ERROR:
+
+    fbMotor.Start := FALSE;
+    fbValve.OpenCmd := FALSE;
+    fbValve.CloseCmd := FALSE;
+
+    IF Reset THEN
+        MachineState := ST_IDLE;
+    END_IF
+
+END_CASE
+
+fbMotor(
+    MotorFeedback := SimMotorFB,
+    EStop := EStop,
+    InterlockOK := InterlockOK,
+    Reset := Reset
+);
+
+fbValve(
+    OpenFeedback := SimOpenFB,
+    CloseFeedback := SimCloseFB,
+    E_Stop := EStop,
+    InterlockOK := InterlockOK,
+    Reset := Reset
+);
+
+MotorOut     := fbMotor.MotorCmd;
+ValveOpenOut := fbValve.OpenOut;
+ValveCloseOut := fbValve.CloseOut;]]></ST>
+    </Implementation>
+    <LineIds Name="MAIN">
+      <LineId Id="2" Count="0" />
+      <LineId Id="106" Count="0" />
+      <LineId Id="101" Count="1" />
+      <LineId Id="104" Count="0" />
+      <LineId Id="15" Count="0" />
+      <LineId Id="105" Count="0" />
+      <LineId Id="16" Count="10" />
+      <LineId Id="107" Count="0" />
+      <LineId Id="29" Count="1" />
+      <LineId Id="32" Count="35" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="86" Count="13" />
+      <LineId Id="83" Count="0" />
+      <LineId Id="100" Count="0" />
+      <LineId Id="84" Count="1" />
+      <LineId Id="82" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
