@@ -18,7 +18,7 @@ Il progetto è strutturato secondo un’architettura modulare:
 - **FB_Motor**
   - Controllo motore con stati: IDLE, STARTING, RUNNING, STOPPING, FAULT
   - Gestione timeout di avviamento e perdita feedback
-  - Contatore avviamenti e gestione warning
+  - Gestione warning
 
 - **FB_Valve**
   - Controllo valvola con stati: IDLE, OPENING, OPENED, CLOSING, CLOSED, FAULT
@@ -51,26 +51,5 @@ Il progetto è strutturato secondo un’architettura modulare:
 - Implementazione di state machine per attuatori e macchina
 - Gestione eventi tramite edge detection (`R_TRIG`)
 - Utilizzo di timer IEC (`TON`) per sequenze temporizzate
-- Gestione fault:
-  - Timeout attuatori
-  - Interlock
-  - E-Stop
-  - Incoerenza feedback
 - Simulazione dei segnali per test senza hardware
 
----
-
-## Obiettivo del progetto
-
-Sviluppare competenze pratiche in ambito automazione industriale:
-
-- Progettazione software PLC strutturato
-- Separazione tra logica, dispositivi e I/O
-- Gestione robusta degli stati e degli errori
-- Approccio modulare e scalabile
-
----
-
-## Note
-
-Il progetto è stato sviluppato a scopo formativo per simulare un contesto industriale reale.
