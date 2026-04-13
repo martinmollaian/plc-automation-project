@@ -1,7 +1,0 @@
-TYPE State_Machine :
-(
-	ST_IDLE,
-    ST_RUN,
-    ST_ERROR
-);
-END_TYPE
