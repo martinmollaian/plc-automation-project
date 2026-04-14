@@ -6,6 +6,10 @@ VAR
 	fbMotor : FB_Motor;
     fbValve : FB_Valve;
 
+    tMotorFB : TON;
+	tValveOpenFB : TON;
+	tValveCloseFB : TON;
+
     rtPiece : R_TRIG;
     tDelay  : TON;
     tBlow   : TON;
@@ -88,6 +92,33 @@ fbValve(
     Reset := Reset
 );
 
+// SIMULAZIONE FEEDBACK
+
+// Motor feedback
+IF fbMotor.MotorCmd THEN
+    tMotorFB(IN := TRUE, PT := T#1s);
+ELSE
+    tMotorFB(IN := FALSE);
+END_IF;
+SimMotorFB := tMotorFB.Q;
+
+// Open feedback
+IF fbValve.OpenOut THEN
+    tValveOpenFB(IN := TRUE, PT := T#3S);
+ELSE
+    tValveOpenFB(IN := FALSE);
+END_IF;
+
+// Close feedback
+IF fbValve.CloseOut THEN
+    tValveCloseFB(IN := TRUE, PT := T#10S);
+ELSE
+    tValveCloseFB(IN := FALSE);
+END_IF;
+SimOpenFB := tValveOpenFB.Q;
+SimCloseFB := tValveCloseFB.Q;
+
+// Mapping Output
 MotorOut     := fbMotor.MotorCmd;
 ValveOpenOut := fbValve.OpenOut;
 ValveCloseOut := fbValve.CloseOut;]]></ST>
